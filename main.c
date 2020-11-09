@@ -1,74 +1,99 @@
 #include <windows.h>
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+void Draw(HDC hdc, RECT *prc)
 {
-	PAINTSTRUCT ps;
-	HDC         hdc;
-	RECT        rc;
+	static int x = 0; x++;
 
-	switch (message)
-	{
+	HDC hdcBuffer = CreateCompatibleDC(hdc);
 
-		case WM_DESTROY:
-			PostQuitMessage(0);
-			break;
+    FillRect(hdc, prc, CreateSolidBrush(RGB(200, 255, 255)));
+	LineTo(hdc, 500, x);
 
-		case WM_PAINT:
-			hdc = BeginPaint(hwnd, &ps);
+    BitBlt(hdc, 0, 0, 3000, 3000, hdcBuffer, 0, 0, SRCCOPY);
 
-			GetClientRect(hwnd, &rc);
-			SetTextColor(hdc, RGB(240,240,96));
-			SetBkMode(hdc, TRANSPARENT);
-			DrawText(hdc, "Hello", -1, &rc, DT_CENTER|DT_SINGLELINE|DT_VCENTER);
+    DeleteDC(hdcBuffer);
+}
 
-			EndPaint(hwnd, &ps);
-			break;
+void NextFrame(HWND hwnd)
+{
+	RECT rcClient;
+	HDC hdc = GetDC(hwnd);
 
-		default:
-			return DefWindowProc(hwnd, message, wParam, lParam);
-	}
+	GetClientRect(hwnd, &rcClient);
+
+	Draw(hdc, &rcClient);
+
+	ReleaseDC(hwnd, hdc);
+}
+
+LRESULT APIENTRY WindowCallback(
+	HWND hwnd,
+	UINT msg,
+	WPARAM wParam,
+	LPARAM lParam)
+{
+    switch (msg)
+    { 
+	case WM_CREATE:
+		SetTimer(hwnd, 1, 16, NULL);
+		break;
+
+	case WM_DESTROY:
+		KillTimer(hwnd, 1);
+		PostQuitMessage(0);
+		break;
+
+	case WM_TIMER:
+		InvalidateRect(hwnd, NULL, FALSE);
+		break;
+
+	case WM_PAINT:
+		NextFrame(hwnd);
+		break;
+
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
 }
 
 int APIENTRY WinMain(
-	HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR     lpCmdLine,
-	int       nCmdShow)
+	HINSTANCE Instance,
+    HINSTANCE PrevInstance,
+    LPSTR CommandLine,
+    int ShowCode)
 {
-	WNDCLASS wc;
+    WNDCLASS WindowClass = { 0 };
+    
+    WindowClass.lpfnWndProc = WindowCallback;
+    WindowClass.hInstance = Instance;
+	WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+    WindowClass.lpszClassName = "AsteroidsWindowClass";
 
-	ZeroMemory(&wc, sizeof wc);
-	wc.hInstance     = hInstance;
-	wc.lpszClassName = "szAppName";
-	wc.lpfnWndProc   = (WNDPROC)WndProc;
-	wc.style         = CS_DBLCLKS|CS_VREDRAW|CS_HREDRAW;
-	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
+	if (!RegisterClass(&WindowClass)) return -1;
 
-	if (FALSE == RegisterClass(&wc)) return 0;
-
-	HWND hwnd = CreateWindow(
-		"szAppName",
-		"szTitle",
-		WS_OVERLAPPEDWINDOW|WS_VISIBLE,
+	HWND Window = CreateWindow(
+		WindowClass.lpszClassName,
+		"Asteroids",
+		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		0,
 		0,
-		hInstance,
+		Instance,
 		0);
 
-	if (NULL == hwnd) return 0;
+	if (!Window) return -1;
 
 	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	do
 	{
+		GetMessageW(&msg, 0, 0, 0);
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+	while (msg.message != WM_QUIT);
 
-	return msg.wParam;
+    return 0;
 }
