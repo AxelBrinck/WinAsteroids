@@ -29,7 +29,7 @@ void NextFrame(HWND hwnd)
 	DeleteObject(hdc);
 }
 
-LRESULT APIENTRY WindowCallback(
+LRESULT CALLBACK WindowCallback(
 	HWND hwnd,
 	UINT msg,
 	WPARAM wParam,
