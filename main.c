@@ -1,29 +1,32 @@
 #include <windows.h>
 
-void Draw(HDC hdc, RECT *prc)
+void Draw(HDC hdc, RECT *windowRect)
 {
-	static int x = 0; x++;
+	static int x = 0; x++; x = x > 60 ? 0 : x;
+	HBRUSH color = CreateSolidBrush(RGB(200 + x, 255 - x, 255 - x * 2));
 
-	HDC hdcBuffer = CreateCompatibleDC(hdc);
+    FillRect(hdc, windowRect, color);
+	LineTo(hdc, x , x);
+	LineTo(hdc, x / 2 + 2 , 23);
+	SetPixel(hdc, 400, 400, (COLORREF) 0x00000000);
 
-    FillRect(hdc, prc, CreateSolidBrush(RGB(200, 255, 255)));
-	LineTo(hdc, 500, x);
-
-    BitBlt(hdc, 0, 0, 3000, 3000, hdcBuffer, 0, 0, SRCCOPY);
-
-    DeleteDC(hdcBuffer);
+	DeleteObject(color);
 }
 
 void NextFrame(HWND hwnd)
 {
-	RECT rcClient;
-	HDC hdc = GetDC(hwnd);
+	RECT windowRect;
+	PAINTSTRUCT ps;
 
-	GetClientRect(hwnd, &rcClient);
+	HDC hdc = BeginPaint(hwnd, &ps);
 
-	Draw(hdc, &rcClient);
+	GetClientRect(hwnd, &windowRect);
 
-	ReleaseDC(hwnd, hdc);
+	Draw(hdc, &windowRect);
+
+	EndPaint(hwnd, &ps);
+
+	DeleteObject(hdc);
 }
 
 LRESULT APIENTRY WindowCallback(
@@ -35,7 +38,8 @@ LRESULT APIENTRY WindowCallback(
     switch (msg)
     { 
 	case WM_CREATE:
-		SetTimer(hwnd, 1, 16, NULL);
+		// TODO: Create a cleaner way
+		SetTimer(hwnd, 1, 20, NULL);
 		break;
 
 	case WM_DESTROY:
