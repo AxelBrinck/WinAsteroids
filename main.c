@@ -70,6 +70,14 @@ LRESULT CALLBACK WindowCallback(
 		NextFrame(hwnd);
 		break;
 
+	case WM_KEYDOWN:
+		printf("down!");
+		break;
+
+	case WM_KEYUP:
+		printf("up!");
+		break;
+
 	// For the rest of the messages (there are many) we will return the deault
 	// procedure. This will cause the window to not freeze.
 	default:
