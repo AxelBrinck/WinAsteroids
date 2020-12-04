@@ -4,13 +4,17 @@ void Draw(HDC hdc, RECT *windowRect)
 {
 	static int x = 0; x++; x = x > 60 ? 0 : x;
 	HBRUSH color = CreateSolidBrush(RGB(200 + x, 255 - x, 255 - x * 2));
+	HDC buffer = CreateCompatibleDC(hdc);s
 
     FillRect(hdc, windowRect, color);
 	LineTo(hdc, x , x);
 	LineTo(hdc, x / 2 + 2 , 23);
 	SetPixel(hdc, 400, 400, (COLORREF) 0x00000000);
 
+	//BitBlt(hdc, 0, 0, 34, 34, buffer, 34, 34, SRCCOPY);
+
 	DeleteObject(color);
+	DeleteDC(buffer);
 }
 
 void NextFrame(HWND hwnd)
