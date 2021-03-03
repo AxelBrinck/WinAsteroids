@@ -1,18 +1,38 @@
 #include <windows.h>
+#include <time.h>
+
+int WindowX = 0;
+int WindowY = 0;
+int WindowWidth = 1920;
+int WindowHeight = 1080;
 
 HWND Window;
+
+clock_t t1, t2;
+
+long timediff(clock_t t1, clock_t t2) {
+    long elapsed;
+    elapsed = ((double)t2 - t1) / CLOCKS_PER_SEC * 1000;
+    return elapsed;
+}
 
 void Draw(HDC hdc, RECT *windowRect)
 {
     static int x = 0; x++; x = x > 60 ? 0 : x;
-    HBRUSH color = CreateSolidBrush(RGB(200 + x, 255 - x, 255 - x * 2));
+    HBRUSH color = CreateSolidBrush(RGB(200 + x, 140 - x, 255 - x * 2));
     HDC buffer = CreateCompatibleDC(hdc);
 
     FillRect(hdc, windowRect, color);
     LineTo(hdc, x , x);
     LineTo(hdc, x / 2 + 2 , 23);
-    SetPixel(hdc, 400, 400, (COLORREF) 0x00000000);
 
+    t2 = clock();
+
+    long elapsed = timediff(t1, t2);
+    char buffere[50];
+    sprintf(buffere, "elapsed: %ld ms\n", elapsed);
+
+    MessageBox(Window, buffere, "hi", MB_OK);
 
     DeleteObject(color);
     DeleteDC(buffer);
@@ -116,17 +136,20 @@ int APIENTRY WinMain(
     Window = CreateWindow(
         WindowClass.lpszClassName,
         "Asteroids",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
+        WS_OVERLAPPED | WS_VISIBLE | WS_BORDER | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX | WS_DLGFRAME,
+        WindowX,
+        WindowY,
+        WindowWidth,
+        WindowHeight,
         0,
         0,
         Instance,
         0);
 
     if (!Window) return -1;
+
+    
+    t1 = clock();
 
     // Windows message loop.
     // Here we are going to receive messages from Windows API.
